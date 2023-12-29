@@ -7,85 +7,60 @@ pub const TokenError = error{
 };
 
 pub const Token = enum(u8) {
-    K_Import,
-    K_Use,
-    K_Define,
+    K_Require,
     K_Macro,
-    K_Test,
-    K_Bench,
-    K_Mut,
+    //    K_Test,
+    //    K_Bench,
     K_Let,
     K_Const,
-    K_Once,
-    K_Local,
     K_Num,
-    K_I32,
-    K_U32,
-    K_U64,
-    K_I64,
-    K_I16,
-    K_U16,
-    K_U8,
-    K_I8,
-    K_Bit,
-    K_F64,
-    K_F32,
-    K_D32,
-    K_D64,
+    //    K_I32,
+    //    K_U32,
+    //    K_U64,
+    //    K_I64,
+    //    K_I16,
+    //    K_U16,
+    //    K_U8,
+    //    K_I8,
+    //    K_Bit,
+    //    K_F64,
+    //    K_F32,
+    //    K_D32,
+    //    K_D64,
     K_If,
-    K_Else,
     K_Type,
-    K_This,
-    K_Null,
-    K_Char,
-    K_String,
-    K_Inline,
-    K_Static,
     K_Switch,
-    K_For,
-    K_In,
     K_Break,
+    K_For,
     K_Enum,
     K_Pub,
     K_Return,
-    K_Async,
-    K_Await,
-    K_Box,
-    K_Trait,
-    K_Ptr,
-    K_Match,
-    K_Addr,
-    K_Vol,
+    //    K_Async,
+    //    K_Await,
     K_True,
     K_False,
-    K_Void,
-    K_Iface,
-    K_Gen,
     K_Undef,
     K_Never,
     K_Bool,
     K_Byte,
     K_Fn,
-    K_Contract,
-    K_Queue,
-    K_Thread,
-    K_Pool,
-    K_Observe,
-    K_Message,
-    K_Block,
-    K_Suspend,
-    K_Resume,
-    K_Export,
-    K_Notify,
+    //    K_Contract,
+    //    K_Queue,
+    //    K_Thread,
+    //    K_Pool,
+    //    K_Observe,
+    //    K_Message,
+    //    K_Block,
+    //    K_Suspend,
+    //    K_Resume,
+    //    K_Notify,
     K_Not,
     K_And,
     K_Or,
     K_Error,
-    K_AnyError,
-    K_Extends,
-    K_Impl,
-    K_Copy,
-    K_TypeOf,
+    //    K_AnyError,
+    //    K_Copy,
+    //    K_TypeOf,
     K_Self,
     K_Frame,
     K_Any,
@@ -411,85 +386,60 @@ inline fn skip_whitespace(buf: []const u8) usize {
 }
 
 const keywords = [_][]const u8{
-    "import",
-    "use",
-    "define",
+    "require",
     "macro",
-    "test",
-    "bench",
-    "mut",
+    //    "test",
+    //    "bench",
     "let",
     "const",
-    "once",
-    "local",
     "num",
-    "i32",
-    "u32",
-    "u64",
-    "i64",
-    "i16",
-    "u16",
-    "u8",
-    "i8",
-    "bit",
-    "f64",
-    "f32",
-    "d32",
-    "d64",
+    //"i32",
+    //"u32",
+    //"u64",
+    //"i64",
+    //"i16",
+    //"u16",
+    //"u8",
+    //"i8",
+    //"bit",
+    //"f64",
+    //"f32",
+    //"d32",
+    //"d64",
     "if",
-    "else",
     "type",
-    "this",
-    "null",
-    "char",
-    "string",
-    "inline",
-    "static",
     "switch",
-    "for",
-    "in",
     "break",
+    "for",
     "enum",
     "pub",
     "return",
-    "async",
-    "await",
-    "box",
-    "trait",
-    "ptr",
-    "match",
-    "addr",
-    "vol",
+    //    "async",
+    //    "await",
     "true",
     "false",
-    "void",
-    "iface",
-    "generic",
     "undef",
     "never",
     "bool",
     "byte",
     "fn",
-    "contract",
-    "queue",
-    "thread",
-    "pool",
-    "observe",
-    "message",
-    "block",
-    "suspend",
-    "resume",
-    "export",
-    "notify",
+    //"contract",
+    //"queue",
+    //"thread",
+    //"pool",
+    //"observe",
+    //"message",
+    //"block",
+    //"suspend",
+    //"resume",
+    //"notify",
     "not",
     "and",
     "or",
     "error",
-    "anyerror",
-    "extends",
-    "impl",
-    "copy",
-    "typeof",
+    //"anyerror",
+    //"copy",
+    //"typeof",
     "self",
     "frame",
     "any",
@@ -565,26 +515,12 @@ test "keywords tokens" {
     try testing.expect(len == 5);
     try testing.expect(tok == Token.K_Const);
 
-    buf = "local";
-    len = 0;
-    tok = tokenize_chars(buf, &len);
-
-    try testing.expect(len == 5);
-    try testing.expect(tok == Token.K_Local);
-
     buf = "true";
     len = 0;
     tok = tokenize_chars(buf, &len);
 
     try testing.expect(len == 4);
     try testing.expect(tok == Token.K_True);
-
-    buf = "string";
-    len = 0;
-    tok = tokenize_chars(buf, &len);
-
-    try testing.expect(len == 6);
-    try testing.expect(tok == Token.K_String);
 
     buf = "pub";
     len = 0;
@@ -593,26 +529,12 @@ test "keywords tokens" {
     try testing.expect(len == 3);
     try testing.expect(tok == Token.K_Pub);
 
-    buf = "resume";
+    buf = "self";
     len = 0;
     tok = tokenize_chars(buf, &len);
 
-    try testing.expect(len == 6);
-    try testing.expect(tok == Token.K_Resume);
-
-    buf = "export";
-    len = 0;
-    tok = tokenize_chars(buf, &len);
-
-    try testing.expect(len == 6);
-    try testing.expect(tok == Token.K_Export);
-
-    buf = "u64";
-    len = 0;
-    tok = tokenize_chars(buf, &len);
-
-    try testing.expect(len == 3);
-    try testing.expect(tok == Token.K_U64);
+    try testing.expect(len == 4);
+    try testing.expect(tok == Token.K_Self);
 }
 
 test "get next singular" {
