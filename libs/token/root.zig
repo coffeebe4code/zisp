@@ -7,13 +7,13 @@ pub const TokenError = error{
 };
 
 pub const Token = enum(u8) {
-    K_Require,
-    K_Macro,
+    //K_Require,
+    //K_Macro,
     //    K_Test,
     //    K_Bench,
     K_Let,
     K_Const,
-    K_Num,
+    // K_Num,
     //    K_I32,
     //    K_U32,
     //    K_U64,
@@ -23,26 +23,26 @@ pub const Token = enum(u8) {
     //    K_U8,
     //    K_I8,
     //    K_Bit,
-    //    K_F64,
+    K_F64,
     //    K_F32,
     //    K_D32,
     //    K_D64,
-    K_If,
-    K_Type,
-    K_Switch,
-    K_Break,
-    K_For,
-    K_Enum,
-    K_Pub,
-    K_Return,
+    //K_If,
+    //K_Type,
+    //K_Switch,
+    //K_Break,
+    //K_For,
+    //K_Enum,
+    //K_Pub,
+    //K_Return,
     //    K_Async,
     //    K_Await,
-    K_True,
-    K_False,
-    K_Undef,
-    K_Never,
-    K_Bool,
-    K_Byte,
+    //K_True,
+    //K_False,
+    //K_Undef,
+    //K_Never,
+    //K_Bool,
+    //K_Byte,
     K_Fn,
     //    K_Contract,
     //    K_Queue,
@@ -54,16 +54,16 @@ pub const Token = enum(u8) {
     //    K_Suspend,
     //    K_Resume,
     //    K_Notify,
-    K_Not,
-    K_And,
-    K_Or,
-    K_Error,
+    //K_Not,
+    //K_And,
+    //K_Or,
+    //K_Error,
     //    K_AnyError,
     //    K_Copy,
     //    K_TypeOf,
-    K_Self,
-    K_Frame,
-    K_Any,
+    //K_Self,
+    //K_Frame,
+    //K_Any,
     // non keyword
     OParen,
     CParen,
@@ -386,13 +386,13 @@ inline fn skip_whitespace(buf: []const u8) usize {
 }
 
 const keywords = [_][]const u8{
-    "require",
-    "macro",
+    //"require",
+    //"macro",
     //    "test",
     //    "bench",
     "let",
     "const",
-    "num",
+    //"num",
     //"i32",
     //"u32",
     //"u64",
@@ -402,26 +402,26 @@ const keywords = [_][]const u8{
     //"u8",
     //"i8",
     //"bit",
-    //"f64",
+    "f64",
     //"f32",
     //"d32",
     //"d64",
-    "if",
-    "type",
-    "switch",
-    "break",
-    "for",
-    "enum",
-    "pub",
-    "return",
+    //"if",
+    //"type",
+    //"switch",
+    //"break",
+    //"for",
+    //"enum",
+    //"pub",
+    //"return",
     //    "async",
     //    "await",
-    "true",
-    "false",
-    "undef",
-    "never",
-    "bool",
-    "byte",
+    //"true",
+    //"false",
+    //"undef",
+    //"never",
+    //"bool",
+    //"byte",
     "fn",
     //"contract",
     //"queue",
@@ -433,16 +433,16 @@ const keywords = [_][]const u8{
     //"suspend",
     //"resume",
     //"notify",
-    "not",
-    "and",
-    "or",
-    "error",
+    //"not",
+    //"and",
+    //"or",
+    //"error",
     //"anyerror",
     //"copy",
     //"typeof",
-    "self",
-    "frame",
-    "any",
+    //"self",
+    //"frame",
+    //"any",
 };
 
 test "word len check regular" {
@@ -501,12 +501,12 @@ test "basic numbers" {
 }
 
 test "keywords tokens" {
-    var buf: []const u8 = "macro";
+    var buf: []const u8 = "fn";
     var len: usize = 0;
     var tok = tokenize_chars(buf, &len);
 
     try testing.expect(len == 5);
-    try testing.expect(tok == Token.K_Macro);
+    try testing.expect(tok == Token.K_Fn);
 
     buf = "const";
     len = 0;
@@ -515,26 +515,26 @@ test "keywords tokens" {
     try testing.expect(len == 5);
     try testing.expect(tok == Token.K_Const);
 
-    buf = "true";
-    len = 0;
-    tok = tokenize_chars(buf, &len);
-
-    try testing.expect(len == 4);
-    try testing.expect(tok == Token.K_True);
-
-    buf = "pub";
+    buf = "f64";
     len = 0;
     tok = tokenize_chars(buf, &len);
 
     try testing.expect(len == 3);
-    try testing.expect(tok == Token.K_Pub);
+    try testing.expect(tok == Token.K_F64);
 
-    buf = "self";
-    len = 0;
-    tok = tokenize_chars(buf, &len);
+    //buf = "pub";
+    //len = 0;
+    //tok = tokenize_chars(buf, &len);
 
-    try testing.expect(len == 4);
-    try testing.expect(tok == Token.K_Self);
+    //try testing.expect(len == 3);
+    //try testing.expect(tok == Token.K_Pub);
+
+    //buf = "self";
+    //len = 0;
+    //tok = tokenize_chars(buf, &len);
+
+    //try testing.expect(len == 4);
+    //try testing.expect(tok == Token.K_Self);
 }
 
 test "get next singular" {

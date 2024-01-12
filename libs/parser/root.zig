@@ -1,10 +1,10 @@
-const Token = @import("../token/root.zig").Token;
-const TokenError = @import("../token/root.zig").TokenError;
-const Lexer = @import("./lexer.zig").Lexer;
-const Ast = @import("./ast.zig").Ast;
-const ast = @import("./ast.zig");
-const Span = @import("./span.zig").Span;
-const AstTag = @import("./ast.zig").AstTag;
+const Token = @import("token").Token;
+const TokenError = @import("token").TokenError;
+const Lexer = @import("lexer").Lexer;
+const Ast = @import("ast").Ast;
+const ast = @import("ast");
+const Span = @import("span").Span;
+const AstTag = @import("ast").AstTag;
 const Allocator = @import("std").mem.Allocator;
 const std = @import("std");
 const ArrayList = @import("std").ArrayList;
@@ -20,65 +20,70 @@ const ParserError = error{
 const Parser = struct {
     lexer: Lexer,
     asts: ArrayList(Ast),
+    allocator: Allocator,
 
     pub fn init(lexer: Lexer, allocator: Allocator) anyerror!Parser {
-        var asts: ArrayList(Ast) = std.ArrayList(Ast).init(allocator);
+        const asts: ArrayList(Ast) = std.ArrayList(Ast).init(allocator);
         return Parser{
             .lexer = lexer,
             .asts = asts,
+            .allocator = allocator,
         };
     }
 
     pub fn deinit(self: *Parser) void {
         self.asts.deinit();
-    }
-
-    pub fn parse_low_bin(self: *Parser) anyerror!?*Ast {
-        const mb_left = try self.parse_high_bin();
-        if (mb_left) |left| {
-            const mb_bin = try self.lexer.collect_if_of(&[2]Token{ Token.Mul, Token.Div, Token.Mod });
-            const bin = try expect_ast(mb_bin, "low_bin");
-            const right = try expect_ast(try self.high_bin());
-            const local = ast.make_binop(left, bin, right);
-
-            try self.asts.append(local);
-            return &self.asts.items[self.asts.items.len - 1];
+        for (0..self.envs.items.len) |i| {
+            i.deinit();
         }
-        return null;
+        self.envs.deinit();
     }
 
-    pub fn parse_high_bin(self: *Parser) anyerror!?*Ast {
-        const mb_left = try self.parse_unary();
-        if (mb_left) |left| {
-            const mb_bin = try self.lexer.collect_if_of(&[2]Token{ Token.Plus, Token.Sub });
-            const bin = try expect_span(mb_bin, "high_bin");
-            const right = try expect_ast(try self.parse_unary(), "high_bin");
-            const local = ast.make_binop(left, bin, right);
-            try self.asts.append(local);
-            return &self.asts.items[self.asts.items.len - 1];
+    pub fn parse_sexpr(self: *Parser) anyerror!?usize {
+        const atom = try self.parse_atom();
+        if (atom) |a| {
+            return a;
         }
-        return null;
+        const oparen = try self.lexer.collect_if(Token.OParen);
+        _ = try expect_span(oparen, "expected one of '('");
+
+        var env: ArrayList(*Ast) = std.ArrayList(*Ast).init(self.allocator);
+        while (true) {
+            const m_cparen = try self.lexer.collect_if(Token.CParen);
+            if (m_cparen) |_| {
+                break;
+            }
+            const m_expr = try self.parse_sexpr();
+            const expr = try expect_ast(m_expr, "expected s-expression");
+
+            try env.append(expr);
+        }
+        const local = ast.make_list(&env.items, self.envs.items.len - 1);
+        try self.envs.append(env);
+        try self.asts.append(local);
+        return self.get_last();
     }
 
-    pub fn parse_unary(self: *Parser) anyerror!?*Ast {
-        const span = try self.lexer.collect_if_of(&[2]Token{ Token.Not, Token.Sub });
+    pub fn parse_atom(self: *Parser) anyerror!?usize {
+        const span = try self.lexer.collect_if_of(&[2]Token{
+            Token.Num,
+            Token.Symbol,
+        });
         if (span) |capture| {
-            const rhs = try expect_ast(try self.parse_unary(), "unary");
-            const local = ast.make_unop(rhs, capture);
+            const local = ast.make_atom(capture);
             try self.asts.append(local);
-            return &self.asts.items[self.asts.items.len - 1];
-        }
-        return try self.parse_num();
-    }
-
-    pub fn parse_num(self: *Parser) anyerror!?*Ast {
-        const span = try self.lexer.collect_if(Token.Num);
-        if (span) |capture| {
-            const local = ast.make_num(capture);
-            try self.asts.append(local);
-            return &self.asts.items[self.asts.items.len - 1];
+            return self.get_current_index();
         }
         return null;
+    }
+    fn get_current(self: Parser) *Ast {
+        return &self.asts.items[self.asts.items.len - 1];
+    }
+    fn get_current_index(self: Parser) usize {
+        return self.asts.items.len - 1;
+    }
+    pub fn get_ast_by_index(self: Parser, idx: usize) *Ast {
+        return &self.asts.items[idx];
     }
 };
 
@@ -99,41 +104,28 @@ fn expect_ast(expr: anyerror!?*Ast, message: []const u8) anyerror!*Ast {
     };
 }
 
-test "parse high bin" {
-    const buf = "5 + 5";
+test "parse s-expr" {
+    const buf = "(5 5)";
     const lex = Lexer.new(buf, .{ .skip = true });
     var parser = try Parser.init(lex, std.testing.allocator);
-    defer parser.deinit();
-    const result = try parser.parse_high_bin();
-    const left = result.?.*.BinOp[0].*.Num;
-    const op = result.?.*.BinOp[1];
-    const right = result.?.*.BinOp[0].*.Num;
 
-    try testing.expect(std.mem.eql(u8, left.slice, buf[0..1]));
-    try testing.expect(op.token == Token.Plus);
-    try testing.expect(std.mem.eql(u8, right.slice, buf[4..5]));
+    defer parser.deinit();
+    const result = try parser.parse_sexpr();
+    const left = result.?.*.List.val.*[0].*.Atom;
+    const right = result.?.*.List.val.*[1].*.Atom;
+
+    try testing.expect(std.mem.eql(u8, left.slice, buf[1..2]));
+    try testing.expect(left.token == Token.Num);
+    try testing.expect(std.mem.eql(u8, right.slice, buf[3..4]));
+    try testing.expect(right.token == Token.Num);
 }
 
-test "parse num" {
+test "parse atom" {
     const buf = "5";
     const lex = Lexer.new(buf, .{});
     var parser = try Parser.init(lex, std.testing.allocator);
     defer parser.deinit();
-    const result = try parser.parse_num();
+    const result = try parser.parse_atom();
 
-    try testing.expect(result.?.*.Num.token == Token.Num);
-}
-
-test "parse unary" {
-    const buf = "!5";
-    const lex = Lexer.new(buf, .{});
-    var parser = try Parser.init(lex, std.testing.allocator);
-    defer parser.deinit();
-    const result = try parser.parse_unary();
-
-    const left = result.?.*.UnOp[0].*.Num;
-    const op = result.?.*.UnOp[1];
-
-    try testing.expect(std.mem.eql(u8, left.slice, buf[1..2]));
-    try testing.expect(op.token == Token.Not);
+    try testing.expect(result.?.*.Atom.token == Token.Num);
 }

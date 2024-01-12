@@ -6,6 +6,7 @@ const sources = [_]Source{
     .{ "ast", "libs/ast/root.zig", &.{ "token", "span" } },
     .{ "span", "libs/span/root.zig", &.{"token"} },
     .{ "lexer", "libs/lexer/root.zig", &.{ "token", "span" } },
+    .{ "parser", "libs/parser/root.zig", &.{ "token", "span", "lexer", "ast" } },
 };
 
 pub fn build(b: *std.Build) !void {

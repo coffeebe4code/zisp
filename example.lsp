@@ -1,0 +1,5 @@
+(import (ol other-lib)
+  (ab alt-b))
+(export add)
+(defun add (x y)
+  + x y)
